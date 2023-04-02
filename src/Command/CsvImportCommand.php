@@ -2,6 +2,7 @@
 
 namespace App\Command;
 
+use App\Entity\Metro;
 use Symfony\Component\Console\Attribute\AsCommand;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
@@ -9,16 +10,16 @@ use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Input\InputOption;
 use Symfony\Component\Console\Output\OutputInterface;
 use Symfony\Component\Console\Style\SymfonyStyle;
-use App\Entity\Metro;
-use Doctrine\Common\Annotations\Reader as AnnotationsReader;
-use League\Csv\Reader;
 use Symfony\Component\Finder\Finder;
+use Doctrine\ORM\EntityManagerInterface;
+use League\Csv\Reader;
+use PDO;
 
 #[AsCommand(
-    name: 'csv:metro',
+    name: 'csv:import:metro',
     description: 'Import CSV Data File For Metro Table',
 )]
-class CsvImportCommand extends Command
+class  CsvImportCommand extends Command
 {
     /**
      * @var EntityManagerInterface
@@ -26,26 +27,42 @@ class CsvImportCommand extends Command
     private $em;
 
     /**
-     * @param InputInterface  $input
-     * @param OutputInterface $output
+     * CsvImportCommand constructor.
      *
-     * @return void
-     * @throws \Doctrine\ORM\NonUniqueResultException
+     * @param EntityManagerInterface $em
+     *
+     * @throws \Symfony\Component\Console\Exception\LogicException
      */
+    public function __construct(EntityManagerInterface $em)
+    {
+        parent::__construct();
+
+        $this->em = $em;
+    }
+
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-
         $io = new SymfonyStyle($input, $output);
+        //$csv = $this->csvToArray();
+        $this->parseCSV();
 
-        //$csv = Reader::createFromPath('%kernel.root_dir%/../src/Data/metro.csv', 'r');
-        // https://github.com/thephpleague/csv/issues/208
-        //$results = $reader->fetchAssoc();
+        $io->success('Command exited cleanly!');
+    }
 
-        var_dump($this->csvToarray());die;
+    /**
+     * Parse a csv file
+     *
+     * @return array
+     */
+    private function parseCSV()
+    {
+        //$conn = $this->em->getConnection();
+        //$sql = "INSERT INTO `metro` (`id`, `geo_point`, `geo_shape`, `objet_id`, `id_ref_zdl`, `gare_id`, `nom_gare`, `nom_long`, `nom_iv`, `nom_mod`, `mode`, `fer`, `train`, `rer`, `metro`, `tramway`, `navette`, `val`, `terfer`, `tertrain`, `terrer`, `termetro`, `tertram`, `ternavette`, `terval`, `idrefliga`, `idrefligc`, `ligne`, `code_lignf`, `ligne_code`, `indice_lig`, `reseau`, `res_com`, `cod_resf`, `res_stif`, `exploitant`, `num_psr`, `idf`, `principal`, `x`, `y`) VALUES (:id, :geo_point, :geo_shape, :objet_id, :id_ref_zdl, :gare_id, :nom_gare, :nom_long, :nom_iv, :nom_mod, :mode, :fer, :train, :rer, :metro, :tramway, :navette, :val, :terfer, :tertrain, :terrer, :termetro, :tertram, :ternavette, :terval, :idrefliga, :idrefligc, :ligne, :code_lignf, :ligne_code, :indice_lig, :reseau, :res_com, :cod_resf, :res_stif, :exploitant, :num_psr, :idf, :principal, :x, :y)";
+        //$sth = $conn->prepare($sql);
+
+        $csv = Reader::createFromPath('%kernel.root_dir%/../src/Data/metro.csv')->setHeaderOffset(0);
 
         foreach ($csv as $row) {
-
-            // create new athlete
             $metro = (new Metro())
                 ->setgeoPoint($row['geo_point'])
                 ->setGeoShape($row['geo_shape'])
@@ -55,7 +72,6 @@ class CsvImportCommand extends Command
                 ->setNomIv($row['nom_gare'])
                 ->setNomMod($row['nom_mod'])
                 ->setMode($row['mode'])
-
                 ->setFer($row['fer'])
                 ->setTrain($row['train'])
                 ->setRer($row['rer'])
@@ -67,7 +83,6 @@ class CsvImportCommand extends Command
                 ->setTertrain($row['tertrain'])
                 ->setTerrer($row['terrer'])
                 ->setTermetro($row['termetro'])
-
                 ->setTertram($row['tertram'])
                 ->setTernavette($row['ternavette'])
                 ->setTerval($row['terval'])
@@ -80,7 +95,6 @@ class CsvImportCommand extends Command
                 ->setReseau($row['reseau'])
                 ->setResCom($row['res_com'])
                 ->setCodResf($row['cod_resf'])
-
                 ->setResStif($row['res_stif'])
                 ->setExploitant($row['exploitant'])
                 ->setNumPsr($row['num_psr'])
@@ -88,15 +102,29 @@ class CsvImportCommand extends Command
                 ->setPrincipal($row['principal'])
                 ->setX($row['x'])
                 ->setY($row['y']);
-
             $this->em->persist($metro);
         }
-
         $this->em->flush();
-
-        $io->success('Command exited cleanly!');
     }
 
 
-    
+    public function csvToArray()
+    {
+        $path = '%kernel.root_dir%/../src/Data/metro.csv';
+
+        $rows = [];
+        $handle = fopen($path, "r");
+        while (($row = fgetcsv($handle)) !== false) {
+            $rows[] = $row;
+        }
+        fclose($handle);
+        // Remove the first one that contains headers
+        $headers = array_shift($rows);
+        // Combine the headers with each following row
+        $array = [];
+        foreach ($rows as $row) {
+            $array[] = array_merge($headers, $row);
+        }
+        var_dump($array);
+    }
 }
