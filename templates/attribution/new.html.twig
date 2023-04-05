@@ -1,0 +1,14 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}New Attribution
+{% endblock %}
+
+{% block body %}
+	<div class="container-fluid">
+		<h1>Create new Attribution</h1>
+
+		{{ include('attribution/_form.html.twig') }}
+
+		<a class="btn btn-primary" href="{{ path('app_attribution_index') }}">back to list</a>
+	</div>
+{% endblock %}

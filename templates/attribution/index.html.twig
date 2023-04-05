@@ -1,0 +1,39 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Attribution index{% endblock %}
+
+{% block body %}
+<div class="container-fluid">
+    <h1>Attribution index</h1>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>NoPoint</th>
+                <th>DateAdded</th>
+                <th>actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for attribution in attributions %}
+            <tr>
+                <td>{{ attribution.id }}</td>
+                <td>{{ attribution.noPoint }}</td>
+                <td>{{ attribution.dateAdded ? attribution.dateAdded|date('Y-m-d H:i:s') : '' }}</td>
+                <td>
+                    <a href="{{ path('app_attribution_show', {'id': attribution.id}) }}">show</a>
+                    <a href="{{ path('app_attribution_edit', {'id': attribution.id}) }}">edit</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="4">no records found</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_attribution_new') }}">Create new</a>
+    </div>
+{% endblock %}
